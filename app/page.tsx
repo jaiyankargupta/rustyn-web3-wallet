@@ -1,10 +1,11 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import * as bip39 from "bip39";
 import { BIP32Factory } from "bip32";
 import * as ecc from "tiny-secp256k1";
 import SecretPhrase from "../component/generateSecret/page";
 import Vault from "../component/Vault/page";
+import Seed from "@/component/Seed.tsx/page";
 
 // Initialize BIP32 with the elliptic curve cryptography library
 const bip32 = BIP32Factory(ecc);
@@ -14,25 +15,37 @@ export default function Home() {
   const [showVault, setShowVault] = useState(false);
   const [phraseValue, setPhraseValue] = useState("");
   const [mnemonic, setMnemonic] = useState<string>("");
+  const [seedValue, setSeedValue] = useState<string>("");
+
   const [root, setRoot] = useState<ReturnType<typeof bip32.fromSeed> | null>(
     null
   );
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     setPhraseValue(e.target.value);
+    const seedValue = Buffer.from(e.target.value, "hex");
+    setSeedValue(seedValue.toString("hex"));
+
+    const root = bip32.fromSeed(seedValue);
+    setRoot(root);
+    if (showVault == true) {
+      setPhraseValue("");
+    }
   }
 
-  const generateRandomMnemonic = async () => {
+  const generateRandomMnemonic = useCallback(async () => {
     const generatedMnemonic = bip39.generateMnemonic();
     setMnemonic(generatedMnemonic);
     const seed = await bip39.mnemonicToSeed(generatedMnemonic);
-
+    setSeedValue(seed.toString("hex"));
     const root = bip32.fromSeed(seed);
     setRoot(root);
-  };
+  }, []);
 
   useEffect(() => {
-    generateRandomMnemonic();
-  }, []);
+    if (!phraseValue) {
+      generateRandomMnemonic();
+    }
+  }, [phraseValue, generateRandomMnemonic]);
 
   return (
     <>
@@ -84,7 +97,10 @@ export default function Home() {
 
         <div>
           {showSecret && !phraseValue ? (
-            <SecretPhrase mnemonic={mnemonic} />
+            <>
+              <SecretPhrase mnemonic={mnemonic} />
+              <Seed seed={seedValue} />
+            </>
           ) : (
             ""
           )}

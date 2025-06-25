@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 export default function GenerateSecret({ mnemonic }: { mnemonic: string }) {
   return (
     <div className="mt-2 border rounded p-3">
