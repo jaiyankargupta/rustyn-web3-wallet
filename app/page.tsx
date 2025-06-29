@@ -6,8 +6,8 @@ import * as ecc from "tiny-secp256k1";
 import SecretPhrase from "../component/generateSecret/page";
 import Vault from "../component/Vault/page";
 import Seed from "@/component/Seed.tsx/page";
-
-// Initialize BIP32 with the elliptic curve cryptography library
+import { useRouter } from "next/navigation";
+// Initialize BIP32 with ECC
 const bip32 = BIP32Factory(ecc);
 
 export default function Home() {
@@ -17,9 +17,12 @@ export default function Home() {
   const [mnemonic, setMnemonic] = useState<string>("");
   const [seedValue, setSeedValue] = useState<string>("");
 
-  const [root, setRoot] = useState<ReturnType<typeof bip32.fromSeed> | null>(
-    null
-  );
+  const [root, setRoot] = useState<ReturnType<typeof bip32.fromSeed> | null>(null);
+  const router = useRouter();
+  const handleRegister = () => {
+    router.push("/register")
+  }
+
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     setPhraseValue(e.target.value);
     const seedValue = Buffer.from(e.target.value, "hex");
@@ -27,7 +30,8 @@ export default function Home() {
 
     const root = bip32.fromSeed(seedValue);
     setRoot(root);
-    if (showVault == true) {
+
+    if (showVault === true) {
       setPhraseValue("");
     }
   }
@@ -48,65 +52,64 @@ export default function Home() {
   }, [phraseValue, generateRandomMnemonic]);
 
   return (
-    <>
-      <div className="mt-24 mx-[100px] max-w-3xl w-full">
-        <div>
-          <h1 className="text-4xl font-extrabold bg-clip-text">
-            Rustyn wallet
-          </h1>
-          <p className="text-lg text-gray-300">
-            A personal web-3 wallet for{" "}
-            <span className=" text-white font-bold">rustyn-user.</span>
-          </p>
-        </div>
-
-        <div className="flex mt-2 w-full">
-          <input
-            value={phraseValue}
-            onChange={(e) => {
-              handleInputChange(e);
-              setShowSecret(false);
-              setShowVault(false);
-            }}
-            className="flex-[0.8] border p-2 rounded bg-transparent placeholder-gray-400 text-white"
-            type="text"
-            placeholder="Enter your secret phrase (or leave blank to generate)"
-          />
-          {phraseValue ? (
-            <button
-              className="flex-[0.2] ml-2 p-2 bg-white rounded text-black"
-              onClick={() => {
-                setShowSecret(!showSecret);
-                setShowVault(!showVault);
-              }}
-            >
-              Add Wallet
-            </button>
-          ) : (
-            <button
-              className="flex-[0.2] ml-2 p-2 bg-white rounded text-black"
-              onClick={() => {
-                setShowSecret(!showSecret);
-                setShowVault(!showVault);
-              }}
-            >
-              Generate Wallet
-            </button>
-          )}
-        </div>
-
-        <div>
-          {showSecret && !phraseValue ? (
-            <>
-              <SecretPhrase mnemonic={mnemonic} />
-              <Seed seed={seedValue} />
-            </>
-          ) : (
-            ""
-          )}
-        </div>
-        <div>{showVault ? <Vault root={root} /> : ""}</div>
+    <div className="mt-24 mx-auto max-w-4xl px-6 text-white">
+      <div className="mb-10">
+        <h1 className="text-5xl font-extrabold bg-gradient-to-r from-indigo-400 via-pink-500 to-purple-500 text-transparent bg-clip-text">
+          Rustyn Wallet
+        </h1>
+        <p className="text-lg text-gray-300 mt-2">
+          A personal web3 wallet for{" "}
+          <span className="text-white font-bold">rustyn-user</span>.
+        </p>
       </div>
-    </>
+
+      <div className="flex flex-col sm:flex-row items-stretch gap-3 sm:gap-4 w-full">
+        <input
+          value={phraseValue}
+          onChange={(e) => {
+            handleInputChange(e);
+            setShowSecret(false);
+            setShowVault(false);
+          }}
+          className="flex-1 border border-gray-700 bg-gray-800 px-4 py-2 rounded-md placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          type="text"
+          placeholder="Enter your secret phrase (or leave blank to generate)"
+        />
+        <button
+          className="bg-indigo-600 hover:bg-indigo-700 transition-all duration-150 px-4 py-2 rounded-md text-sm font-semibold"
+          onClick={() => {
+            setShowSecret(!showSecret);
+            setShowVault(!showVault);
+          }}
+        >
+          {phraseValue ? "Add Wallet" : "Generate Wallet"}
+        </button>
+        <button
+          className="bg-indigo-600 hover:bg-indigo-700 transition-all duration-150 px-4 py-2 rounded-md text-sm font-semibold"
+          onClick={() => {
+            handleRegister();
+          }}
+        >
+          Register
+        </button>
+      </div>
+
+      {showSecret && !phraseValue && (
+        <div className="mt-8 space-y-6">
+          <div className="bg-gray-800 p-4 rounded-lg shadow-md">
+            <SecretPhrase mnemonic={mnemonic} />
+          </div>
+          <div className="bg-gray-800 p-4 rounded-lg shadow-md">
+            <Seed seed={seedValue} />
+          </div>
+        </div>
+      )}
+
+      {showVault && (
+        <div className="mt-8 bg-gray-800 p-4 rounded-lg shadow-md">
+          <Vault root={root} />
+        </div>
+      )}
+    </div>
   );
 }
